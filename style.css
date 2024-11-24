@@ -1,0 +1,11 @@
+
+body {
+    margin: 0px;
+    padding: 0px;
+}
+
+canvas {
+    border: 2px solid hsl(200, 100%, 50%);
+    background-color: black;
+}
+
