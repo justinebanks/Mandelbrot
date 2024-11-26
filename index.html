@@ -8,6 +8,63 @@
 </head>
 <body>
     <canvas></canvas>
+    
+    <div class="controller">
+        <div>
+            <label for="resolution">Resolution</label>
+            <input type="number" id="resolution" value="400">
+            <button onclick="changeVar('resolution', -1)">-</button>
+            <button onclick="changeVar('resolution', 1)">+</button>
+        </div>
+        <div>
+            <label for="accuracy">Accuracy</label>
+            <input type="number" id="accuracy" value="200">
+            <button onclick="changeVar('accuracy', -1)">-</button>
+            <button onclick="changeVar('accuracy', 1)">+</button>
+        </div>
+        <div>
+            <label for="startx">Start X</label>
+            <input type="number" id="startx" value="-2">
+            <button onclick="changeVar('startx', -1)">-</button>
+            <button onclick="changeVar('startx', 1)">+</button>
+        </div>
+        <div>
+            <label for="starty">Start Y</label>
+            <input type="number" id="starty" value="-1">
+            <button onclick="changeVar('starty', -1)">-</button>
+            <button onclick="changeVar('starty', 1)">+</button>
+        </div>
+        <div>
+            <label for="viewwidth">View Width</label>
+            <input type="number" id="viewwidth" value="4">
+            <button onclick="changeVar('viewwidth', -1)">-</button>
+            <button onclick="changeVar('viewwidth', 1)">+</button>
+        </div>
+        <div>
+            <label for="realc">Real C</label>
+            <input type="number" id="realc" value="0.4">
+            <button onclick="changeVar('realc', -1)">-</button>
+            <button onclick="changeVar('realc', 1)">+</button>
+        </div>
+        <div>
+            <label for="imaginaryc">Imaginary C</label>
+            <input type="number" id="imaginaryc" value="0.2">
+            <button onclick="changeVar('imaginaryc', -1)">-</button>
+            <button onclick="changeVar('imaginaryc', 1)">+</button>
+        </div>
+        <div>
+            <label for="mode">Mode</label>
+            <select id="mode" onchange="document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Space'}))">
+                <option value="mandelbrot">Mandelbrot Set</option>
+                <option value="julia">Julia Set</option>
+            </select>
+    
+        </div>
+    </div>
+
+    <button id="toggle-menu">X</button>
+
+
     <script src="main.js"></script>
 </body>
 </html>

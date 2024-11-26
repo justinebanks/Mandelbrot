@@ -9,6 +9,33 @@ canvas.width = window.innerWidth*0.99;
 canvas.height = window.innerHeight*0.98;
 
 
+let qualityStep = 25;
+let moveStep = 0.2;
+let zoomStep = 1.25;
+let cStep = 0.025;
+
+let boxStart = { x: 0, y: 0 };
+let boxEnd = { x: 0, y: 0 };
+
+
+// HTML Inputs
+let controller = document.querySelector("div.controller")
+let toggleBtn = document.getElementById("toggle-menu");
+
+let resolution = document.getElementById("resolution");
+let accuracy = document.getElementById("accuracy");
+let startX = document.getElementById("startx");
+let startY = document.getElementById("starty");
+let viewWidth = document.getElementById("viewwidth");
+let cR = document.getElementById("realc");
+let cI = document.getElementById("imaginaryc");
+let mode = document.getElementById("mode");
+
+
+let endX = parseFloat(startX.value) + parseFloat(viewWidth.value);
+let endY = parseFloat(startY.value) + parseFloat(viewWidth.value)*(canvas.height/canvas.width);
+
+
 class ComplexNumber {
     constructor(real, imaginary) {
         this.real = real;
@@ -142,8 +169,7 @@ function runSimulation(resolution, accuracy, startX, endX, startY, endY, cR=0, c
 
         for (let x = startX; x < endX; x+=xStep) {
             let num = new ComplexNumber(x, y);
-            //let orbit = inMandelbrotSet(num, accuracy);
-            let orbit = inJuliaSet(num, new ComplexNumber(cR, cI), accuracy);
+            let orbit = mode.value == "mandelbrot" ? inMandelbrotSet(num, accuracy) : inJuliaSet(num, new ComplexNumber(cR, cI), accuracy);
 
             if (orbit != -1) {
                 row.push({num, orbit});
@@ -173,28 +199,8 @@ function plotData(data, gradient) {
 }
 
 
-
- 
-let startX = -2;
-let startY = -1;
-let viewWidth = 4;
-let resolution = 400;
-let accuracy = 200;
-
-let cR = 0.4;
-let cI = 0.2;
-
-let endX = startX + viewWidth
-let endY = startY + viewWidth*(canvas.height/canvas.width)
-
-
-let qualityStep = 5;
-let moveStep = 0.2;
-let zoomStep = 1.25;
-let cStep = 0.1;
-
-
-let gradient = new LinearGradient([
+// Code for Different Gradient Presets
+let defaultGradient = new LinearGradient([
     new Color(  0,   7, 100),
     new Color( 32, 107, 203),
     new Color(237, 255, 255),
@@ -202,17 +208,61 @@ let gradient = new LinearGradient([
     new Color(  0,   2,   0)
 ]);
 
+let grayscaleGradient = new LinearGradient([
+    new Color(0, 0, 0),
+    new Color(255, 255, 255)
+])
 
-let boxStart = { x: 0, y: 0 };
-let boxEnd = { x: 0, y: 0 };
+let gradient = defaultGradient;
 
-document.addEventListener("mousedown", (e) => {
+
+
+
+
+// Onclick Event Listener for All the +/i Buttons
+function changeVar(id, sign) {
+    if (id == "startx" || id == "starty") {
+        let startN = document.getElementById(id)
+        startN.value = parseFloat(startN.value) + parseFloat(viewWidth.value)*moveStep*sign;
+    }
+
+    if (id == "resolution" || id == "accuracy") {
+        let quality = document.getElementById(id)
+        quality.value = parseFloat(quality.value) + qualityStep*sign;
+    }
+    
+    if (id == "realc" || id == "imaginaryc") {
+        let cX = document.getElementById(id);
+        cX.value = parseFloat(cX.value) + cStep*sign;
+    }
+
+    if (id == "viewwidth") {
+        let zoom = document.getElementById(id);
+        zoom.value = sign == 1 ? parseFloat(zoom.value) * zoomStep : parseFloat(zoom.value) / zoomStep;
+    }
+
+    document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Space'}));
+}
+
+
+toggleBtn.addEventListener("click", () => {
+    if (controller.style.display == "none") {
+        controller.style.display = "block";
+    }
+    else {
+        controller.style.display = "none"
+    }
+})
+
+
+canvas.addEventListener("mousedown", (e) => {
     boxStart.x = e.offsetX;
     boxStart.y = e.offsetY;
     console.log("Down");
 })
 
-document.addEventListener("mouseup", (e) => {
+
+canvas.addEventListener("mouseup", (e) => {
     console.log("Up");
     boxEnd.x = e.offsetX;
     boxEnd.y = e.offsetY;
@@ -224,87 +274,53 @@ document.addEventListener("mouseup", (e) => {
 })
 
 
+let previousState = [startX.value, startY.value, viewWidth.value];
+
 
 document.addEventListener("keydown", e => {
     if (e.key == "Enter") {
+        previousState = [startX.value, startY.value, viewWidth.value];
+
         let start = {
-            x: boxStart.x / (canvas.width/Math.abs(endX-startX)) + startX,
-            y: boxStart.y / (canvas.height/Math.abs(endY-startY)) + startY
+            x: boxStart.x / (canvas.width/Math.abs(endX-parseFloat(startX.value))) + parseFloat(startX.value),
+            y: boxStart.y / (canvas.height/Math.abs(endY-parseFloat(startY.value))) + parseFloat(startY.value)
         };
     
         let end = {
-            x: boxEnd.x / (canvas.width/Math.abs(endX-startX)) + startX,
+            x: boxEnd.x / (canvas.width/Math.abs(endX-parseFloat(startX.value))) + parseFloat(startX.value),
             y: 0
         };
     
         end.y = start.y + (end.x-start.x)*(canvas.height/canvas.width);
         
+        if (boxEnd.x-boxStart.x > 0) {
+            
+            startX.value = start.x;
+            startY.value = start.y;
+            viewWidth.value = (end.x-start.x);
+        }
+
         boxStart = { x: 0, y: 0 };
         boxEnd = { x: 0, y: 0 };
+    }
 
-        startX = start.x;
-        startY = start.y;
-        viewWidth = (end.x-start.x);   
+    // Rewind
+    if (e.key == "z") {
+        startX.value = previousState[0];
+        startY.value = previousState[1];
+        viewWidth.value = previousState[2];
     }
 
 
-
-    switch (e.key) {
-        case "ArrowLeft":
-            startX -= viewWidth*moveStep;
-            break;
-        case "ArrowRight":
-            startX += viewWidth*moveStep;
-            break;
-        case "ArrowUp":
-            startY -= viewWidth*moveStep;
-            break;
-        case "ArrowDown":
-            startY += viewWidth*moveStep;
-            break;
-        case "a":
-            viewWidth *= zoomStep;
-            break;
-        case "d":
-            viewWidth /= zoomStep;
-            break;
-        case "s":
-            if (resolution < qualityStep) break;
-            resolution -= qualityStep;
-            break;
-        case "w":
-            resolution += qualityStep;
-            break;
-        case "q":
-            if (accuracy < qualityStep) break;
-            accuracy -= qualityStep;
-            break;
-        case "e":
-            accuracy += qualityStep;
-            break;
-        case "i":
-            cI += cStep;
-            break;
-        case "k":
-            cI -= cStep;
-            break;
-        case "j":
-            cR -= cStep;
-            break;
-        case "l":
-            cR += cStep;
-            break;
-    }
-
-    endX = startX + viewWidth
-    endY = startY + viewWidth*(canvas.height/canvas.width)
-
+    if (e.key == "Enter" || e.key == "Space" || e.key == "z")
+    endX = parseFloat(startX.value) + parseFloat(viewWidth.value)
+    endY = parseFloat(startY.value) + parseFloat(viewWidth.value)*(canvas.height/canvas.width)
 
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let start = Date.now();
-    let data = runSimulation(resolution, accuracy, startX, endX, startY, endY, cR, cI);
+    let data = runSimulation(parseFloat(resolution.value), parseFloat(accuracy.value), parseFloat(startX.value), endX, parseFloat(startY.value), endY, parseFloat(cR.value), parseFloat(cI.value));
     let elapsedEval = Date.now()-start;
 
     start = Date.now();
@@ -312,8 +328,9 @@ document.addEventListener("keydown", e => {
     let elapsedRender = Date.now()-start;
 
     console.log("Evaluation Took " + elapsedEval + " Milliseconds, Rendering Took " + elapsedRender + " Milliseconds");
+
 })
 
 
-let data = runSimulation(resolution, accuracy, startX, endX, startY, endY, cR, cI);
+let data = runSimulation(parseFloat(resolution.value), parseFloat(accuracy.value), parseFloat(startX.value), endX, parseFloat(startY.value), endY, parseFloat(cR.value), parseFloat(cI.value));
 plotData(data, gradient);
