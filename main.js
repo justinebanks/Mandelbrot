@@ -103,12 +103,22 @@ class LinearGradient {
 }
 
 
+function inMandelbrotSet(c, maxI=50) {
+    let z = new ComplexNumber(0, 0);
 
-// if Zn = Zn-1^2 + C -> Infinity, then c not in set
-function inSet(c, maxI=50) {
-    z = new ComplexNumber(0, 0);
+    for (let i = 0; i < maxI; i++) { 
+        z = z.multiply(z).add(c);
 
-    for (let i = 0; i < maxI; i++) {  // 
+        if (z.real >= 2) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+function inJuliaSet(z, c, maxI=50) {
+    for (let i = 0; i < maxI; i++) {
         z = z.multiply(z).add(c);
 
         if (z.real >= 2) {
@@ -121,7 +131,7 @@ function inSet(c, maxI=50) {
 
 
 
-function runSimulation(resolution, accuracy, startX, endX, startY, endY) {
+function runSimulation(resolution, accuracy, startX, endX, startY, endY, cR=0, cI=0) {
     let xStep = (endX-startX) / resolution;
     let yStep = (endY-startY) / resolution;
 
@@ -132,7 +142,8 @@ function runSimulation(resolution, accuracy, startX, endX, startY, endY) {
 
         for (let x = startX; x < endX; x+=xStep) {
             let num = new ComplexNumber(x, y);
-            let orbit = inSet(num, accuracy);
+            //let orbit = inMandelbrotSet(num, accuracy);
+            let orbit = inJuliaSet(num, new ComplexNumber(cR, cI), accuracy);
 
             if (orbit != -1) {
                 row.push({num, orbit});
@@ -166,14 +177,21 @@ function plotData(data, gradient) {
  
 let startX = -2;
 let startY = -1;
-let viewWidth = 3.5;
-let resolution = 500;
+let viewWidth = 4;
+let resolution = 400;
 let accuracy = 200;
+
+let cR = 0.4;
+let cI = 0.2;
 
 let endX = startX + viewWidth
 let endY = startY + viewWidth*(canvas.height/canvas.width)
 
+
 let qualityStep = 5;
+let moveStep = 0.2;
+let zoomStep = 1.25;
+let cStep = 0.1;
 
 
 let gradient = new LinearGradient([
@@ -208,7 +226,6 @@ document.addEventListener("mouseup", (e) => {
 
 
 document.addEventListener("keydown", e => {
-
     if (e.key == "Enter") {
         let start = {
             x: boxStart.x / (canvas.width/Math.abs(endX-startX)) + startX,
@@ -221,25 +238,36 @@ document.addEventListener("keydown", e => {
         };
     
         end.y = start.y + (end.x-start.x)*(canvas.height/canvas.width);
-    
-        //let data = runSimulation(resolution, accuracy, start.x, end.x, start.y, end.y);
-        //plotData(data, gradient);
         
         boxStart = { x: 0, y: 0 };
         boxEnd = { x: 0, y: 0 };
 
         startX = start.x;
         startY = start.y;
-        viewWidth = (end.x-start.x);
-        
-        endX = start.x + viewWidth;
-        endY = start.y + viewWidth*(canvas.height/canvas.width);
-
-        
+        viewWidth = (end.x-start.x);   
     }
 
 
+
     switch (e.key) {
+        case "ArrowLeft":
+            startX -= viewWidth*moveStep;
+            break;
+        case "ArrowRight":
+            startX += viewWidth*moveStep;
+            break;
+        case "ArrowUp":
+            startY -= viewWidth*moveStep;
+            break;
+        case "ArrowDown":
+            startY += viewWidth*moveStep;
+            break;
+        case "a":
+            viewWidth *= zoomStep;
+            break;
+        case "d":
+            viewWidth /= zoomStep;
+            break;
         case "s":
             if (resolution < qualityStep) break;
             resolution -= qualityStep;
@@ -247,19 +275,36 @@ document.addEventListener("keydown", e => {
         case "w":
             resolution += qualityStep;
             break;
-        case "j":
+        case "q":
             if (accuracy < qualityStep) break;
             accuracy -= qualityStep;
             break;
-        case "l":
+        case "e":
             accuracy += qualityStep;
             break;
+        case "i":
+            cI += cStep;
+            break;
+        case "k":
+            cI -= cStep;
+            break;
+        case "j":
+            cR -= cStep;
+            break;
+        case "l":
+            cR += cStep;
+            break;
     }
+
+    endX = startX + viewWidth
+    endY = startY + viewWidth*(canvas.height/canvas.width)
+
+
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let start = Date.now();
-    let data = runSimulation(resolution, accuracy, startX, endX, startY, endY);
+    let data = runSimulation(resolution, accuracy, startX, endX, startY, endY, cR, cI);
     let elapsedEval = Date.now()-start;
 
     start = Date.now();
@@ -269,5 +314,6 @@ document.addEventListener("keydown", e => {
     console.log("Evaluation Took " + elapsedEval + " Milliseconds, Rendering Took " + elapsedRender + " Milliseconds");
 })
 
-let data = runSimulation(resolution, accuracy, startX, endX, startY, endY);
+
+let data = runSimulation(resolution, accuracy, startX, endX, startY, endY, cR, cI);
 plotData(data, gradient);
