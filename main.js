@@ -193,7 +193,7 @@ function plotData(data, gradient) {
 
     for (let row of rows) {
         for (let point of row) {
-            graph.plot(point.num, gradient.get(point.orbit).toString()); // `hsl(${point.orbit}, 100%, 40%)`
+            graph.plot(point.num, gradient.get(point.orbit/2).toString()); // `hsl(${point.orbit}, 100%, 40%)`
         }  
     }
 }
@@ -248,9 +248,11 @@ function changeVar(id, sign) {
 toggleBtn.addEventListener("click", () => {
     if (controller.style.display == "none") {
         controller.style.display = "block";
+        toggleBtn.innerText = "X";
     }
     else {
         controller.style.display = "none"
+        toggleBtn.innerText = "O";
     }
 })
 
