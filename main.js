@@ -2,6 +2,7 @@
 // Better Simulation: https://math.hws.edu/eck/js/mandelbrot/MB.html
 // Wikipedia Article: https://en.wikipedia.org/wiki/Mandelbrot_set
 
+
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 
